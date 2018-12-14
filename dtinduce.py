@@ -66,8 +66,13 @@ class DecisionTree():
             return False
         
     def find_best_split(self, data_index, attributes):
+        num = data_index.size
+        print("There are ",num, "data points at this node")
+        max_gini = 0
+        attribute = 0
+        value = 0
         for i in attributes:
-
+            # sort the split values
             sorted_index = data_index[self.X[:,i].argsort()]
             
             sorted_val = self.X[sorted_index][:, i]
@@ -85,7 +90,8 @@ class DecisionTree():
             print(gini_table)
 
             current_val = sorted_val[0]
-            for j in range(self.num):
+            # for all data points
+            for j in range(num):
                 val = sorted_val[j]
                 label = sorted_label[j]
                 index = np.argwhere(self.labels == label)[0][0]
@@ -98,8 +104,12 @@ class DecisionTree():
                 sys.exit()
                 
                 if val != current_val:
-                    gini_index = self.calculate_gini(gini_table)
-            
+                    current_val = val
+                    gini = self.calculate_gini(gini_table)
+                    if gini > max_gini:
+                        max_gini = gini
+                        attribute = i
+                        value = val
 
         return attribute, value
 
@@ -115,8 +125,6 @@ class DecisionTree():
                 l -= (gini_table[i][0]/left_total)**2
             if right_total != 0:
                 r -= (gini_table[i][1]/right_total)**2
-            print(l)
-            print(r)
 
         gini_index = left_total/total * l + right_total/total * r
         return gini_index
