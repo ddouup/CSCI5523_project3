@@ -1,5 +1,5 @@
 import numpy as np
-import sys
+import sys, time
 
 class Node:
     def __init__(self):
@@ -36,14 +36,13 @@ class DecisionTree():
 
         else:
             root = Node();
-            root.attribute, root.value, left_data_index = self.find_best_split(_data_index, _attributes)
+            root.attribute, root.value, left_data_index, right_data_index = self.find_best_split(_data_index, _attributes)
 
-            attributes = np.delete(_attributes, root.attribute)
+            attributes = np.setdiff1d(_attributes, root.attribute)
             
             left_child = self.TreeGrowth(left_data_index, attributes)
             root.left = left_child
 
-            right_data_index = np.setdiff1d(_data_index, left_data_index)
             right_child = self.TreeGrowth(right_data_index, attributes)
             root.right = right_child
 
@@ -65,63 +64,80 @@ class DecisionTree():
             return False
         
     def find_best_split(self, data_index, attributes):
-        num = data_index.size
-        print("There are ",num, "data points at this node")
-        min_gini = 0
+        print("There are ",data_index.size, "data points at this node")
+        print(attributes)
+        print("There are ",attributes.size, "attributes at this node")
+        min_gini = 1
         attribute = 0
         value = 0
-        left_data_index = np.array([])
+        left_data_index = np.array([], dtype=int)
         for i in attributes:
+            print("The",i,"attribute.")
             # sort the split values
-            sorted_index = data_index[self.X[:,i].argsort()]
+            sorted_index = data_index[self.X[data_index][:, i].argsort()]
             
             sorted_val = self.X[sorted_index][:, i]
             sorted_label = self.y[sorted_index]
-            print(sorted_val)
-            print(sorted_label)
+            #print(sorted_val)
+            #print(sorted_label)
+
+            labels, counts = np.unique(sorted_label, return_counts=True)
+            #print(counts)
 
             # initialize gini table, all data points at right side
-            gini_table = np.zeros((self.label_num, 2), dtype=int)   #       <=val, >val
+            gini_table = np.zeros((labels.size, 2), dtype=int)   #       <=val, >val
                                                                     #labels      ,
-            labels, counts = np.unique(sorted_label, return_counts=True)
-            print(counts)
-
             gini_table[:,1] = counts
-            print(gini_table)
+            #print(gini_table)
 
             current_val = sorted_val[0]
-            l_data_index = np.array([])
-            # for all data points
-            for j in range(num):
+            current_label = sorted_label[0]
+            l_data_index = np.array([],dtype=int)
+            # for each split value
+            for j in range(sorted_val.size):
+                #print("The", j, "data point")
                 val = sorted_val[j]
+                #print(val)
                 label = sorted_label[j]
-                index = np.argwhere(self.labels == label)[0][0]
-                print(index)
-                # left side decrease 1, right side increase 1
-                gini_table[index][0] -= 1
-                gini_table[index][1] += 1
-                l_data_index = np.append(l_data_index, data_index[j])
-                print(gini_table)
-                print(self.calculate_gini(gini_table))
-                sys.exit()
                 
                 if val != current_val:
                     current_val = val
-                    gini = self.calculate_gini(gini_table)
-                    if gini < min_gini:
-                        min_gini = gini
-                        attribute = i
-                        value = val
-                        left_data_index = l_data_index
+                    if label != current_label:
+                        current_label = label
+                        gini = self.calculate_gini(gini_table)
+                        #print(gini)
+                        if gini < min_gini:
+                            min_gini = gini
+                            attribute = i
+                            value = val
+                            left_data_index = l_data_index
+                            min_gini_table = np.copy(gini_table)
+                            print("min gini:", min_gini)
+                            print("attribute:", attribute)
+                            print("value:",value)
+                            print(min_gini_table)
+                            print()
 
+                # left side decrease 1, right side increase 1
+                index = np.argwhere(labels == label)[0][0]
+                gini_table[index][0] += 1
+                gini_table[index][1] -= 1
+                l_data_index = np.append(l_data_index, sorted_index[j])
 
-        return attribute, value, left_data_index
+        right_data_index = np.setdiff1d(data_index, left_data_index)
+        print(min_gini_table)
+        print(attribute)
+        print(value)
+        print(left_data_index)
+        print(right_data_index)
+        print()
+        return attribute, value, left_data_index, right_data_index
 
     def calculate_gini(self, gini_table):
+
         left_total = gini_table[:,0].sum()
         right_total = gini_table[:,1].sum()
         total = left_total + right_total
-
         l = 1
         r = 1
         for i in range(gini_table.shape[0]):
@@ -140,6 +156,8 @@ class DecisionTree():
         return label
 
     def save(self, model_file):
+        with open(model_file) as file:
+            print('1')
         print("Model saved")
 
 
@@ -150,8 +168,11 @@ def main(train_file, minfreq, model_file):
     print(X_train.shape)
     print(y_train.shape)
 
+    start = time.time()
     model = DecisionTree(minfreq).fit(X_train, y_train)
     #model.save(model_file)
+    end = time.time()
+    print("Time: ", start-end, "seconds")
 
 
 if __name__ == '__main__':
