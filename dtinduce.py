@@ -36,15 +36,14 @@ class DecisionTree():
 
         else:
             root = Node();
-            root.attribute, root.value = self.find_best_split(_data_index, _attributes)
+            root.attribute, root.value, left_data_index = self.find_best_split(_data_index, _attributes)
 
             attributes = np.delete(_attributes, root.attribute)
             
-            left_data_index = _data_index
             left_child = self.TreeGrowth(left_data_index, attributes)
             root.left = left_child
 
-            right_data_index = _data_index
+            right_data_index = np.setdiff1d(_data_index, left_data_index)
             right_child = self.TreeGrowth(right_data_index, attributes)
             root.right = right_child
 
@@ -68,9 +67,10 @@ class DecisionTree():
     def find_best_split(self, data_index, attributes):
         num = data_index.size
         print("There are ",num, "data points at this node")
-        max_gini = 0
+        min_gini = 0
         attribute = 0
         value = 0
+        left_data_index = np.array([])
         for i in attributes:
             # sort the split values
             sorted_index = data_index[self.X[:,i].argsort()]
@@ -90,6 +90,7 @@ class DecisionTree():
             print(gini_table)
 
             current_val = sorted_val[0]
+            l_data_index = np.array([])
             # for all data points
             for j in range(num):
                 val = sorted_val[j]
@@ -99,6 +100,7 @@ class DecisionTree():
                 # left side decrease 1, right side increase 1
                 gini_table[index][0] -= 1
                 gini_table[index][1] += 1
+                l_data_index = np.append(l_data_index, data_index[j])
                 print(gini_table)
                 print(self.calculate_gini(gini_table))
                 sys.exit()
@@ -106,12 +108,14 @@ class DecisionTree():
                 if val != current_val:
                     current_val = val
                     gini = self.calculate_gini(gini_table)
-                    if gini > max_gini:
-                        max_gini = gini
+                    if gini < min_gini:
+                        min_gini = gini
                         attribute = i
                         value = val
+                        left_data_index = l_data_index
 
-        return attribute, value
+
+        return attribute, value, left_data_index
 
     def calculate_gini(self, gini_table):
         left_total = gini_table[:,0].sum()
@@ -129,8 +133,10 @@ class DecisionTree():
         gini_index = left_total/total * l + right_total/total * r
         return gini_index
 
-    def classify(self, data):
-        
+    def classify(self, data_index):
+        labels, counts = np.unique(self.y[data_index], return_counts=True)
+        label = labels[np.argmax(counts)]
+        print("Label for this leaf:", label)
         return label
 
     def save(self, model_file):
