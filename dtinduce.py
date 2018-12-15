@@ -1,8 +1,9 @@
 import numpy as np
-import sys, time
+import sys, time, os
 
 class Node:
     def __init__(self):
+        self.index = None
         self.left = None
         self.right = None
         self.attribute = None
@@ -12,6 +13,7 @@ class Node:
 class DecisionTree():
     def __init__(self, minfreq):
         self.minfreq = int(minfreq)
+        self.tree_index = 0
 
     def fit(self, X, y):
         self.X = X
@@ -32,11 +34,15 @@ class DecisionTree():
         if self.stop_cond(_data_index, _attributes) == True:
             leaf = Node();
             leaf.label = self.classify(_data_index)
+            leaf.index = self.tree_index
+            self.tree_index +=1
             return leaf
 
         else:
             root = Node();
             root.attribute, root.value, left_data_index, right_data_index = self.find_best_split(_data_index, _attributes)
+            root.index = self.tree_index
+            self.tree_index += 1
 
             attributes = np.setdiff1d(_attributes, root.attribute)
             
@@ -65,8 +71,8 @@ class DecisionTree():
         
     def find_best_split(self, data_index, attributes):
         print("There are ",data_index.size, "data points at this node")
-        print(attributes)
         print("There are ",attributes.size, "attributes at this node")
+        print(attributes)
         min_gini = 1
         attribute = 0
         value = 0
@@ -112,11 +118,11 @@ class DecisionTree():
                             value = val
                             left_data_index = l_data_index
                             min_gini_table = np.copy(gini_table)
-                            print("min gini:", min_gini)
-                            print("attribute:", attribute)
-                            print("value:",value)
-                            print(min_gini_table)
-                            print()
+                            #print("min gini:", min_gini)
+                            #print("attribute:", attribute)
+                            #print("value:",value)
+                            #print(min_gini_table)
+                            #print()
 
                 # left side decrease 1, right side increase 1
                 index = np.argwhere(labels == label)[0][0]
@@ -125,11 +131,12 @@ class DecisionTree():
                 l_data_index = np.append(l_data_index, sorted_index[j])
 
         right_data_index = np.setdiff1d(data_index, left_data_index)
+        print("min gini:", attribute)
+        print("attribute:", attribute)
+        print("value:",value)
         print(min_gini_table)
-        print(attribute)
-        print(value)
-        print(left_data_index)
-        print(right_data_index)
+        print("left data index:",left_data_index)
+        print("right data index:",right_data_index)
         print()
         return attribute, value, left_data_index, right_data_index
 
@@ -156,10 +163,17 @@ class DecisionTree():
         return label
 
     def save(self, model_file):
-        with open(model_file) as file:
-            print('1')
+        with open(model_file, 'w') as file:
+            self.printPreorder(self.root, file)
         print("Model saved")
 
+    def printPreorder(self, node, file):
+        if node.label == None:
+            file.write(str(node.index)+','+str(node.attribute)+','+str(node.value)+'\n')
+            self.printPreorder(node.left, file)
+            self.printPreorder(node.right, file)
+        else:
+            file.write(str(node.index)+','+str(node.label)+'\n')
 
 def main(train_file, minfreq, model_file):
     data = np.genfromtxt(train_file, delimiter=',')
@@ -170,9 +184,10 @@ def main(train_file, minfreq, model_file):
 
     start = time.time()
     model = DecisionTree(minfreq).fit(X_train, y_train)
-    #model.save(model_file)
     end = time.time()
     print("Time: ", start-end, "seconds")
+
+    model.save(os.path.splitext(model_file)[0]+'_'+str(minfreq)+os.path.splitext(model_file)[1])
 
 
 if __name__ == '__main__':
