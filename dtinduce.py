@@ -131,7 +131,7 @@ class DecisionTree():
                 l_data_index = np.append(l_data_index, sorted_index[j])
 
         right_data_index = np.setdiff1d(data_index, left_data_index)
-        print("min gini:", attribute)
+        print("min gini:", min_gini)
         print("attribute:", attribute)
         print("value:",value)
         print(min_gini_table)
