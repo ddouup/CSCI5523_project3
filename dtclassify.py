@@ -40,7 +40,7 @@ class DecisionTree():
     def predict(X_test):
         self.X_test = X_test
         data_index = np.arange(X_test.shape[0])
-        y_pred = np.array((X_test.shape[0],1))
+        y_pred = np.array((X_test.shape[0],1))z
 
 
 
