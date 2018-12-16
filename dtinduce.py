@@ -127,7 +127,7 @@ class DecisionTree():
                         #print("value ",val,"   label:",label)
 
                         # left side decrease 1, right side increase 1
-                        # index = np.argwhere(labels == label)[0][0]
+                        # index = np.argwhere(labels == label)[0][0]    #TOO SLOW!!!
                         index = 0
                         for l in labels:
                             if label == l:
