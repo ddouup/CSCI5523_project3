@@ -40,12 +40,15 @@ class DecisionTree():
 
         else:
             root = Node();
-            root.attribute, root.value, left_data_index, right_data_index = self.find_best_split(_data_index, _attributes)
+            root.attribute, root.value = self.find_best_split(_data_index, _attributes)
             root.index = self.tree_index
             self.tree_index += 1
 
             attributes = np.setdiff1d(_attributes, root.attribute)
-            
+
+            left_data_index = _data_index[np.where(self.X[_data_index, root.attribute] < root.value)]
+            right_data_index = np.setdiff1d(_data_index, left_data_index)
+
             left_child = self.TreeGrowth(left_data_index, attributes)
             root.left = left_child
 
@@ -76,7 +79,6 @@ class DecisionTree():
         min_gini = 1
         attribute = 0
         value = 0
-        left_data_index = np.array([], dtype=int)
         min_gini_table = np.array([], dtype=int)
         for i in attributes:
             start = time.time()
@@ -84,13 +86,12 @@ class DecisionTree():
 
             values = self.X[data_index][:, i]
             vals, v_counts = np.unique(values, return_counts=True)
-            print(time.time()-start)
-            start = time.time()
+
             # if the attribute has more than one split value
             if vals.size != 1:
                 # sort the split values
                 sorted_index = data_index[self.X[data_index][:, i].argsort()]
-                sorted_val = self.X[sorted_index][:, i]
+                #sorted_val = self.X[sorted_index][:, i]
                 sorted_label = self.y[sorted_index]
                 #print(sorted_val)
                 #print(sorted_label)
@@ -99,11 +100,12 @@ class DecisionTree():
                 
                 # initialize gini table, all data points at right side
                 gini_table = np.zeros((labels.size, 2), dtype=int)   #       <=val, >val
-                                                                        #labels      ,
+                                                                     #labels      ,
                 gini_table[:,1] = l_counts
                 #print(gini_table)
-                l_data_index = np.array([],dtype=int)
                 offset = 0
+                print(time.time()-start)
+                start = time.time()
                 for k in range(vals.size):
                     val = vals[k]
                     gini = self.calculate_gini(gini_table)
@@ -112,7 +114,6 @@ class DecisionTree():
                         min_gini = gini
                         attribute = i
                         value = val
-                        left_data_index = l_data_index
                         min_gini_table = np.copy(gini_table)
                         #print("min gini:", min_gini)
                         #print("attribute:", attribute)
@@ -126,24 +127,26 @@ class DecisionTree():
                         #print("value ",val,"   label:",label)
 
                         # left side decrease 1, right side increase 1
-                        index = np.argwhere(labels == label)[0][0]
+                        # index = np.argwhere(labels == label)[0][0]
+                        index = 0
+                        for l in labels:
+                            if label == l:
+                                break
+                            index += 1
+
                         gini_table[index][0] += 1
                         gini_table[index][1] -= 1
-                        l_data_index = np.append(l_data_index, sorted_index[j+offset])
-                    
+
                     offset += v_counts[k]
 
             print(time.time()-start)
 
-        right_data_index = np.setdiff1d(data_index, left_data_index)
         print("min gini:", min_gini)
         print("attribute:", attribute)
         print("value:",value)
         print(min_gini_table)
-        print("left data index:",left_data_index)
-        print("right data index:",right_data_index)
         print()
-        return attribute, value, left_data_index, right_data_index
+        return attribute, value
 
     def calculate_gini(self, gini_table):
 
