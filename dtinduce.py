@@ -90,6 +90,7 @@ class DecisionTree():
             if vals.size != 1:
                 # sort the split values
                 sorted_index = data_index[self.X[data_index][:, i].argsort()]
+                sorted_val = self.X[sorted_index][:, i]
                 sorted_label = self.y[sorted_index]
                 #print(sorted_val)
                 #print(sorted_label)
@@ -129,7 +130,7 @@ class DecisionTree():
                         gini_table[index][0] += 1
                         gini_table[index][1] -= 1
                         l_data_index = np.append(l_data_index, sorted_index[j+offset])
-
+                    
                     offset += v_counts[k]
 
             print(time.time()-start)
