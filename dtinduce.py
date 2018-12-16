@@ -81,7 +81,7 @@ class DecisionTree():
         value = 0
         min_gini_table = np.array([], dtype=int)
         for i in attributes:
-            start = time.time()
+            #start = time.time()
             print("The",i,"attribute.")
 
             values = self.X[data_index][:, i]
@@ -104,8 +104,8 @@ class DecisionTree():
                 gini_table[:,1] = l_counts
                 #print(gini_table)
                 offset = 0
-                print(time.time()-start)
-                start = time.time()
+                #print(time.time()-start)
+                #start = time.time()
                 for k in range(vals.size):
                     val = vals[k]
                     gini = self.calculate_gini(gini_table)
@@ -139,7 +139,7 @@ class DecisionTree():
 
                     offset += v_counts[k]
 
-            print(time.time()-start)
+            #print(time.time()-start)
 
         print("min gini:", min_gini)
         print("attribute:", attribute)
